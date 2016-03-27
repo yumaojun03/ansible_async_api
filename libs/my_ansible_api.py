@@ -257,6 +257,5 @@ class AnsibleResult(object):
 if __name__ == "__main__":
     resource = [{"hostname": "192.168.10.148", "port": "22", "username": "root", "password": "mypass"}]
     cmd = Command(resource)
-    cmd.run('time')
     result = cmd.run('time')
-    print(result.result_deal)
+    print(result.result_raw)

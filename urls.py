@@ -1,7 +1,6 @@
-from handlers.ansible_async import MainHandler, AsyncTaskHandler, CommandHandler
+from handlers.ansible_async import MainHandler, CommandHandler
 
 url_patterns = [
     (r"/", MainHandler),
-    (r"/asynctask", AsyncTaskHandler),
     (r"/command", CommandHandler),
 ]
