@@ -43,7 +43,7 @@ class CommandError(AnsibleError):
         super(CommandError, self).__init__(message)
 
 
-class Resource(object):
+class ResourceBase(object):
     """
     gen_inventory methods.
 
@@ -146,9 +146,9 @@ class Resource(object):
                 self.my_add_group(hosts_vars.get("hosts"), group_name, hosts_vars.get("vars"))
 
 
-class Command(Resource):
+class Ad_Hoc(ResourceBase):
     """
-    use ansible shell module to run commands in inventory.
+    execute ansible ad-hoc mode in inventory.
 
     Args:
         resource:　the inventory resource, the resource format see MyRunner on top of this module
@@ -157,22 +157,22 @@ class Command(Resource):
         results_raw: the raw data returned after ansible run.
     """
     def __init__(self, resource):
-        super(Command, self).__init__(resource)
+        super(Ad_Hoc, self).__init__(resource)
         self.results_raw = {}
 
-    def run(self, command, module_name="shell", timeout=10, forks=10, pattern='*'):
+    def run(self, module_arg, module_name="shell", timeout=10, forks=10, pattern='*'):
         """
         run command from andible ad-hoc.
 
         Args:
-            command: which command you want to run
+            module_arg: ansible module argument
             module_name: which module want to use, default use shell
             timeout: set runner api
             forks: see runner api
             pattern: set runner api
         """
         hoc = Runner(module_name=module_name,
-                     module_args=command,
+                     module_args=module_arg,
                      timeout=timeout,
                      inventory=self.inventory,
                      pattern=pattern,
@@ -256,6 +256,6 @@ class AnsibleResult(object):
 
 if __name__ == "__main__":
     resource = [{"hostname": "192.168.10.148", "port": "22", "username": "root", "password": "mypass"}]
-    cmd = Command(resource)
+    cmd = Ad_Hoc(resource)
     result = cmd.run('time')
-    print(result.result_raw)
+    print(result.result_deal)
