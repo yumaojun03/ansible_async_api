@@ -12,12 +12,19 @@ from ansible.inventory import Inventory
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.runner import Runner
+from ansible.playbook import PlayBook
+from ansible import callbacks, utils
 
+import os
 import ansible.constants as C
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PLAYBOOK_DIR = os.path.join(ROOT_DIR, 'ansible_playbooks')
 
 
 def config_ansible():
     C.HOST_KEY_CHECKING = False
+    C.DEFAULT_MODULE_PATH = os.path.join(ROOT_DIR, 'extra_ansible_modules')
 
 
 class AnsibleError(StandardError):
@@ -252,6 +259,44 @@ class AnsibleResult(object):
 
     def __str__(self):
         return self.__unicode__()
+
+
+class MyPlaybook(ResourceBase):
+    """
+    this is my playbook object for execute playbook.
+
+    Attributes:
+        resource: resource dict ,see ResourceBase class
+        playbook_path: relational playbook path, the default playbook directory is: <PLAYBOOK_DIR>
+    """
+    def __init__(self, resource, playbook_path):
+        super(MyPlaybook, self).__init__(resource)
+        self.results_raw = None
+        self.playbook_path = playbook_path
+
+    def run(self, extra_vars=None):
+        """
+        run ansible playbook, only surport relational path.
+
+        Args:
+            extra_vars: playbook extra variables.
+        """
+        stats = callbacks.AggregateStats()
+        playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
+        runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
+        playbook_path = os.path.join(PLAYBOOK_DIR, self.playbook_path)
+
+        pb = PlayBook(
+            playbook=playbook_path,
+            stats=stats,
+            callbacks=playbook_cb,
+            runner_callbacks=runner_cb,
+            inventory=self.inventory,
+            extra_vars=extra_vars,
+            check=False)
+
+        self.results_raw = pb.run()
+        return self.results_raw
 
 
 if __name__ == "__main__":

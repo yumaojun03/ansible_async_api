@@ -11,7 +11,7 @@ from tornado.concurrent import run_on_executor
 from concurrent.futures import ThreadPoolExecutor
 
 
-from libs.my_ansible_api import Ad_Hoc
+from libs.my_ansible_api import Ad_Hoc, MyPlaybook
 from multiprocessing import cpu_count
 
 logger = logging.getLogger('tornado.app')
@@ -85,4 +85,37 @@ class AdHocHandler(RequestHandler):
         res = Ad_Hoc(resource)
         result = res.run(module_arg, module_name)
         return result.result_deal
+
+
+class PlaybookHandler(RequestHandler):
+    executor = ThreadPoolExecutor(cpu_count())
+
+    @asynchronous
+    @gen.coroutine
+    def post(self):
+        try:
+            data = json.loads(self.request.body)
+        except ValueError as e:
+            raise HTTPError(400, reason=e.message)
+        logger.debug("input data: %s" % data)
+        resource, playbook = data.get("resource"), data.get("playbook")
+        if not(resource and playbook):
+            raise HTTPError(400, reason="resource and playbook are required.")
+
+        response = yield self.run(resource, playbook)
+        self.write(str(response))
+        self.finish()
+
+    @run_on_executor
+    def run(self, resource, playbook):
+        """
+        执行ansible playbook
+
+        Args:
+            resource:  ditto
+            playbook: ditto
+        """
+        res = MyPlaybook(resource, playbook)
+        result = res.run()
+        return result
 
